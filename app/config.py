@@ -1,2 +1,2 @@
 TOKEN=""
-API_KEY_OPENAI=""
+API_KEY=""
