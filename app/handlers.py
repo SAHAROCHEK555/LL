@@ -1,16 +1,21 @@
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
-from config import API_KEY
+from config import TEST_LEVEL_API_KEY
 from database_api.DatabaseWork import WorkWithDataBase
 from ai_api.MistralWork import MistralWork
 import keyboards.languages_select_kb as languages_select_kb
 import keyboards.level_language_select as level_language_select_kb
 import keyboards.modules_select_kb as modules_select_kb
+from aiogram.fsm.state import StatesGroup, State
+from aiogram.fsm.context import FSMContext
 
 router = Router()
 user_message = F.data.split()
 path = "database_api/database.json"
+
+class TestLevel(StatesGroup):
+    answers_from_user = State()
 
 
 @router.message(Command("start", "restart"))
@@ -19,32 +24,42 @@ async def command_start(message: Message):
     WorkWithDataBase.clear_database_user(message.from_user.id, path)
 
 
-@router.callback_query(user_message[0] == "back_to_types_of_tasks")
+@router.callback_query(user_message[0] == "language")
+async def write_to_database(callback_query: CallbackQuery):
+    WorkWithDataBase.clear_database_user(callback_query.from_user.id, path)
+    WorkWithDataBase.write_data_to_database(callback_query.from_user.id, "language", callback_query.data.split()[1], path)
+    await callback_query.message.edit_text("Выберите уровень владения языком:", reply_markup=await level_language_select_kb.inline_levels())
+
+
+@router.callback_query(user_message[0] == "languages_select_back")
 async def write_to_database(callback_query: CallbackQuery):
     await callback_query.message.edit_text("Выберите язык:", reply_markup=await languages_select_kb.inline_languages())
 
 
-@router.callback_query(user_message[0] == "language")
+@router.callback_query(user_message[0] == "types_of_tasks_back")
 async def write_to_database(callback_query: CallbackQuery):
     await callback_query.message.edit_text("Выберите уровень владения языком:", reply_markup=await level_language_select_kb.inline_levels())
-    WorkWithDataBase.write_data_to_database(callback_query.from_user.id, "language", callback_query.data.split()[1], path)
     
-
 @router.callback_query(user_message[0] == "level")
 def write_to_database(callback_query: CallbackQuery):
     WorkWithDataBase.write_data_to_database(callback_query.from_user.id, "level", callback_query.data.split()[1], path)
 
 
 @router.callback_query(user_message[0] == "test_level")
-async def give_test_for_user(callback_query: CallbackQuery):
+async def give_test_for_user(callback_query: CallbackQuery, state: FSMContext):
     language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
     get_test_message = f"Привет! Пожалуйста, дай мне тест на определение моего уровня в {language} (Начинающий, Средний, Продвинутый). Скинь только вопросы, я пришлю тебе ответы и ты вернёшь мне следующим сообщением из одного слова мой уровень"
-    test_for_user = MistralWork.answer_from_mistral(API_KEY, get_test_message)
-    await callback_query.message.edit_text(test_for_user, reply_markup=level_language_select_kb.level_selcet_back)
+    test_for_user = MistralWork.answer_from_mistral(TEST_LEVEL_API_KEY, get_test_message)
+    await state.set_state(TestLevel.answers_from_user)
+    await callback_query.message.edit_text(test_for_user, reply_markup=level_language_select_kb.level_select_back)
+     
 
-@router.callback_query(user_message[0] == "languages_select_back")
-async def write_to_database(callback_query: CallbackQuery):
-    await callback_query.message.edit_text("Выберите язык:", reply_markup=await languages_select_kb.inline_languages())
+@router.message(TestLevel.answers_from_user)
+async def get_level(user_message: Message, state: FSMContext):
+    await state.update_data(answer_from_user=user_message.text)
+    user_level = MistralWork.answer_from_mistral(TEST_LEVEL_API_KEY, f"Мои ответы - {user_message.text}. Скажи мне мой уровень одним словом без точки (Начинающий, Средний, Продвинутый).")
+    WorkWithDataBase.write_data_to_database(user_message.from_user.id, "level", user_level, path)
+    
 # async def send_notifications(bot):
 #     while True:
 #         users = Tasks.get_users()

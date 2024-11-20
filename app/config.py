@@ -1,2 +1,2 @@
 TOKEN=""
-API_KEY=""
+TEST_LEVEL_API_KEY=""
