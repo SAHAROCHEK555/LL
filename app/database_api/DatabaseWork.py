@@ -20,7 +20,7 @@ class WorkWithDataBase:
         return read_structure
     
     @staticmethod
-    def clear_database_user(user_id: str, path_to_database: str):
+    def make_database_user(user_id: str, path_to_database: str):
         user_id = str(user_id)
         new_struct = json.load(open(path_to_database, encoding="utf-8"))
         if user_id in new_struct:
