@@ -7,6 +7,8 @@ from ai_api.MistralWork import MistralWork
 import keyboards.languages_select_kb as languages_select_kb
 import keyboards.level_language_select as level_language_select_kb
 import keyboards.modules_select_kb as modules_select_kb
+import app.keyboards.everyday_words_phrases_kb as everyday_words_phrases_kb
+import app.keyboards.grammar_exercises_kb as grammar_exercises_kb
 
 router = Router()
 user_message = F.data.split()
@@ -19,6 +21,7 @@ async def command_start(message: Message):
     WorkWithDataBase.clear_database_user(message.from_user.id, path)
 
 
+# ниже повторяется коллбек "back_to_types_of_tasks"
 @router.callback_query(user_message[0] == "back_to_types_of_tasks")
 async def write_to_database(callback_query: CallbackQuery):
     await callback_query.message.edit_text("Выберите язык:", reply_markup=await languages_select_kb.inline_languages())
@@ -28,7 +31,7 @@ async def write_to_database(callback_query: CallbackQuery):
 async def write_to_database(callback_query: CallbackQuery):
     await callback_query.message.edit_text("Выберите уровень владения языком:", reply_markup=await level_language_select_kb.inline_levels())
     WorkWithDataBase.write_data_to_database(callback_query.from_user.id, "language", callback_query.data.split()[1], path)
-    
+
 
 @router.callback_query(user_message[0] == "level")
 def write_to_database(callback_query: CallbackQuery):
@@ -45,6 +48,25 @@ async def give_test_for_user(callback_query: CallbackQuery):
 @router.callback_query(user_message[0] == "languages_select_back")
 async def write_to_database(callback_query: CallbackQuery):
     await callback_query.message.edit_text("Выберите язык:", reply_markup=await languages_select_kb.inline_languages())
+
+@router.callback_query(user_message[0] == "grammar_exercises")
+async def grammar_exercises(callback_query: CallbackQuery):
+    language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
+    level = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "level", path)
+    get_tasks_message = f"Привет! Пожалуйста, дай мне задание на знание языка {language} для ученика, знающего язык на уровне {level}. Скинь только вопросы, я пришлю тебе ответы и ты вернёшь мне следующим сообщением верно ли решены задания"
+    tasks_for_user = MistralWork.answer_from_mistral(API_KEY, get_tasks_message)
+    await callback_query.message.edit_text(tasks_for_user, reply_markup=await grammar_exercises_kb.inline_exercises())
+
+
+@router.callback_query(user_message[0] == "everyday_words_exercises")
+async def everyday_words_phrases(callback_query: CallbackQuery):
+    language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
+    level = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "level", path)
+    get_words_message = f"Привет! Пожалуйста, дай мне слово или фразу на языке {language} для ученика, знающего язык на уровне {level}. Скинь только слово/фразу и перевод"
+    tasks_for_user = MistralWork.answer_from_mistral(API_KEY, get_words_message)
+    await callback_query.message.edit_text(tasks_for_user, reply_markup=await everyday_words_phrases_kb.inline_words_phrases())
+
+
 # async def send_notifications(bot):
 #     while True:
 #         users = Tasks.get_users()

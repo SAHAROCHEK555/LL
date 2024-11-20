@@ -2,7 +2,7 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 
-from handlers import router#, send_notifications
+from handlers import router  # , send_notifications
 from config import TOKEN
 
 
@@ -17,4 +17,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
