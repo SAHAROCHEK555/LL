@@ -12,6 +12,6 @@ async def inline_levels():
     keyboard.add(InlineKeyboardButton(text=f"Назад⬛️", callback_data=f"languages_select_back no"))
     return keyboard.adjust(2).as_markup()
 
-level_selcet_back = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Назад⬛️", callback_data="back_to_types_of_tasks")]
+level_select_back = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="Назад⬛️", callback_data="types_of_tasks_back no")]
 ])
