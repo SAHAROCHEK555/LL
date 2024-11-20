@@ -1,6 +1,8 @@
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from config import API_KEY
 from database_api.DatabaseWork import WorkWithDataBase
 from ai_api.MistralWork import MistralWork
@@ -14,6 +16,8 @@ router = Router()
 user_message = F.data.split()
 path = "database_api/database.json"
 
+class Reg(StatesGroup):
+    responce = State()
 
 @router.message(Command("start", "restart"))
 async def command_start(message: Message):
@@ -66,6 +70,22 @@ async def everyday_words_phrases(callback_query: CallbackQuery):
     tasks_for_user = MistralWork.answer_from_mistral(API_KEY, get_words_message)
     await callback_query.message.edit_text(tasks_for_user, reply_markup=await everyday_words_phrases_kb.inline_words_phrases())
 
+@router.callback_query(user_message[0] == "explain_grammar")
+async def set_grammar_explain_responce(message: Message, state: FSMContext):
+    await state.set_state(Reg.responce)
+    await message.answer('Введите ваш вопрос по грамматике')
+
+@router.message(Reg.responce)
+async def grammar_handler(message: Message, state: FSMContext):
+    await state.update_data(responce = message.text)
+    data = await state.update_data()
+
+    language = WorkWithDataBase.read_data_from_database(message.from_user.id, "language", path)
+    level = WorkWithDataBase.read_data_from_database(message.from_user.id, "level", path)
+
+    message_answer = MistralWork.answer_from_mistral("tjNW0ju7WlPdGqnlqKba355xMdsP4jGJ", f"представь что ты учитель иностранного языка и обьяснишь мне {data['responce']} в {language} для ученика {level} уровня")
+    await message.answer(text = message_answer)
+    await state.clear()
 
 # async def send_notifications(bot):
 #     while True:
