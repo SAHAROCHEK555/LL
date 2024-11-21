@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-levels = ["Начианющий", "Средний", "Продвинутый"]
+levels = ["Начинающий", "Средний", "Продвинутый"]
 
 async def levels_inline():
     keyboard = InlineKeyboardBuilder()
