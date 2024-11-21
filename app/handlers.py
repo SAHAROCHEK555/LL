@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from config import TEST_LEVEL_API_KEY, GRAMMAR_EXERCISES_API_KEY, EXPLATION_GRAMMAR_RULES_API_KEY, TRANSLATE_API_KEY
-from database_api.DatabaseWork import WorkWithDataBase
+from database_api.WorkWithDatabase import WorkWithDataBase
 from ai_api.MistralWork import MistralWork
 import keyboards.languages_select_kb as languages_select_kb
 import keyboards.level_language_select as level_language_select_kb
@@ -117,7 +117,7 @@ async def grammar_exercises(callback_query: CallbackQuery):
     language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
     level = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "level", path)
     get_tasks_message = f"Привет! Пожалуйста, дай мне задание на знание языка {language} для ученика, знающего язык на уровне {level}. Скинь только вопросы, я пришлю тебе ответы и ты вернёшь мне следующим сообщением верно ли решены задания"
-    tasks_for_user = MistralWork.answer_from_mistral(API_KEY, get_tasks_message)
+    tasks_for_user = MistralWork.answer_from_mistral(EXPLATION_GRAMMAR_RULES_API_KEY, get_tasks_message)
     await callback_query.message.edit_text(tasks_for_user, reply_markup=await grammar_exercises_kb.inline_exercises())
 
 
@@ -126,13 +126,13 @@ async def everyday_words_phrases(callback_query: CallbackQuery):
     language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
     level = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "level", path)
     get_words_message = f"Привет! Пожалуйста, дай мне слово или фразу на языке {language} для ученика, знающего язык на уровне {level}. Скинь только слово/фразу и перевод"
-    tasks_for_user = MistralWork.answer_from_mistral(API_KEY, get_words_message)
+    tasks_for_user = MistralWork.answer_from_mistral(EXPLATION_GRAMMAR_RULES_API_KEY, get_words_message)
     await callback_query.message.edit_text(tasks_for_user, reply_markup=await everyday_words_phrases_kb.inline_words_phrases())
 
-@router.callback_query(user_message[0] == "explation no")
-async def set_grammar_explain_responce(message: Message, state: FSMContext):
+@router.callback_query(user_message[0] == "explation")
+async def set_grammar_explain_responce(callback_query: CallbackQuery, state: FSMContext): 
     await state.set_state(Reg_grammar.responce)
-    await message.answer('Введите ваш вопрос по грамматике')
+    await callback_query.message.edit_text("Напишите какое грамматическое вам объяснить", reply_markup=modules_select_kb.back_to_modules)
 
 @router.message(Reg_grammar.responce)
 async def grammar_handler(message: Message, state: FSMContext):
