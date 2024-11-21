@@ -16,7 +16,7 @@ router = Router()
 user_message = F.data.split()
 path = "database_api/database.json"
 
-class Reg(StatesGroup):
+class Reg_grammar(StatesGroup):
     responce = State()
 
 @router.message(Command("start", "restart"))
@@ -72,10 +72,10 @@ async def everyday_words_phrases(callback_query: CallbackQuery):
 
 @router.callback_query(user_message[0] == "explain_grammar")
 async def set_grammar_explain_responce(message: Message, state: FSMContext):
-    await state.set_state(Reg.responce)
+    await state.set_state(Reg_grammar.responce)
     await message.answer('Введите ваш вопрос по грамматике')
 
-@router.message(Reg.responce)
+@router.message(Reg_grammar.responce)
 async def grammar_handler(message: Message, state: FSMContext):
     await state.update_data(responce = message.text)
     data = await state.update_data()
