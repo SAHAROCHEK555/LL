@@ -23,6 +23,8 @@ class ModulesStates(StatesGroup):
     test_level_state = State()
     translate_state = State()
 
+class Reg_grammar(StatesGroup):
+    responce = State()
 
 #обработка команд start/restart
 @router.message(Command("start", "restart"))
@@ -127,3 +129,19 @@ async def everyday_words_phrases(callback_query: CallbackQuery):
     tasks_for_user = MistralWork.answer_from_mistral(API_KEY, get_words_message)
     await callback_query.message.edit_text(tasks_for_user, reply_markup=await everyday_words_phrases_kb.inline_words_phrases())
 
+@router.callback_query(user_message[0] == "explation no")
+async def set_grammar_explain_responce(message: Message, state: FSMContext):
+    await state.set_state(Reg_grammar.responce)
+    await message.answer('Введите ваш вопрос по грамматике')
+
+@router.message(Reg_grammar.responce)
+async def grammar_handler(message: Message, state: FSMContext):
+    await state.update_data(responce = message.text)
+    data = await state.update_data()
+
+    language = WorkWithDataBase.read_data_from_database(message.from_user.id, "language", path)
+    level = WorkWithDataBase.read_data_from_database(message.from_user.id, "level", path)
+
+    message_answer = MistralWork.answer_from_mistral(EXPLATION_GRAMMAR_RULES_API_KEY, f"представь что ты учитель иностранного языка и обьяснишь мне {data['responce']} в {language} для ученика {level} уровня")
+    await message.answer(text = message_answer)
+    await state.clear()
