@@ -31,5 +31,5 @@ class WorkWithDataBase:
 
     @staticmethod
     def get_all_users_list(path_to_database: str):
-        all_users_list = json.load(open(path_to_database, encoding="utf-8")).keys()
-        return all_users_list
+        all_users_list = dict(json.load(open(path_to_database, encoding="utf-8"))).keys()
+        return list(all_users_list)
