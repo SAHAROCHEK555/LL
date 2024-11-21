@@ -25,7 +25,6 @@ class ModulesStates(StatesGroup):
     grammar_explain_state = State()
 
 
-
 #обработка команд start/restart
 @router.message(Command("start", "restart"))
 async def command_start(message: Message):
@@ -149,3 +148,7 @@ async def grammar_handler(message: Message, state: FSMContext):
     message_answer = MistralWork.answer_from_mistral(EXPLATION_GRAMMAR_RULES_API_KEY, f"представь что ты учитель иностранного языка и обьяснишяешь мне {data['responce']} в {language} для ученика {level} уровня")
     await message.answer(text = message_answer)
     await state.clear()
+
+@router.callback_query(user_message[0] == "flashcards")
+async def set_grammar_explain_responce(callback_query: CallbackQuery): 
+    await callback_query.message.edit_text("Выберите действие", reply_markup=(modules_select_kb.generate_flashcard, modules_select_kb.back_to_modules))
