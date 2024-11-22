@@ -1,9 +1,10 @@
+import asyncio
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
-from config import TEST_LEVEL_API_KEY, GRAMMAR_EXERCISES_API_KEY, EXPLATION_GRAMMAR_RULES_API_KEY, TRANSLATE_API_KEY, DAILY_WORDS_API_KEY
+from config import TEST_LEVEL_API_KEY, GRAMMAR_EXERCISES_API_KEY, EXPLATION_GRAMMAR_RULES_API_KEY, TRANSLATE_API_KEY, DAILY_WORDS_API_KEY, GENERATE_FLASHCARD_API_KEY
 from database_api.WorkWithDatabase import WorkWithDataBase
 from ai_api.MistralWork import MistralWork
 import keyboards.languages_select_kb as languages_select_kb
@@ -11,17 +12,15 @@ import keyboards.level_language_select as level_language_select_kb
 import keyboards.modules_select_kb as modules_select_kb
 import keyboards.translate_keyboard as translate_kb
 import keyboards.grammar_exercises_kb as grammar_exercises_kb
+import keyboards.flashcard_kb as flashcardKb
 import keyboards.everyday_words_phrases_kb as everyday_words_phrases_kb
 import keyboards.exercises_kb as exercises_kb
-import asyncio
-
 
 router = Router()
 user_message = F.data.split()
 path = "database_api/database.json"
 grammar_questions = ''
 translate_questions = ''
-
 
 #класс с состояниями FSM
 class ModulesStates(StatesGroup):
@@ -60,7 +59,7 @@ async def send_notifications(bot):
             language = WorkWithDataBase.read_data_from_database(users[i], "language", path)
             await bot.send_message(int(users[i]), new_words_collections[language])
             await asyncio.sleep(2*2)
-  
+
 
 #обработка команд start/restart
 @router.message(Command("start", "restart"))
@@ -199,4 +198,25 @@ async def grammar_handler(message: Message, state: FSMContext):
     level = WorkWithDataBase.read_data_from_database(message.from_user.id, "level", path)
 
     message_answer = MistralWork.answer_from_mistral(EXPLATION_GRAMMAR_RULES_API_KEY, f"представь что ты учитель иностранного языка и обьяснишяешь мне {data['responce']} в {language} для ученика {level} уровня")
-    await message.answer(text = message_answer,reply_markup=back_to_modules)
+    await message.answer(text = message_answer)
+    await state.clear()
+
+@router.callback_query(user_message[0] == "flashcards")
+async def flashcard_handler_first(callback_query: CallbackQuery): 
+    await callback_query.message.edit_text("Выберите действие", reply_markup=flashcardKb.generate_flashcard)
+
+@router.callback_query(user_message[0] == "generate_flashcard")
+async def flashcard_handler_twice(callback_query: CallbackQuery):
+    await callback_query.message.edit_text('Генерируем запрос...')
+    language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
+    level = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "level", path)
+    text = MistralWork.answer_from_mistral(GENERATE_FLASHCARD_API_KEY, f"Сгенерируй новое слово или новую фразу на {language} языке затем поставь 123 и после него запиши перевод на русский язык.")
+
+    global translate
+    txt = text.split('123')[0]
+    translate = text.split('123')[1]
+    await callback_query.message.edit_text(txt, reply_markup=flashcardKb.show_flashcard_translate)
+
+@router.callback_query(user_message[0] == "show_translate")
+async def flashcard_handler_twice(callback_query: CallbackQuery):
+    await callback_query.message.edit_text(translate, reply_markup=modules_select_kb.back_to_modules)  
