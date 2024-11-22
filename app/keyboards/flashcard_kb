@@ -1,6 +1,0 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-
-generate_flashcard = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Сгенерировать карточку", callback_data="generate_flashcard")],
-    [InlineKeyboardButton(text="Назад⬛️", callback_data="back_to_modules")]
-])
