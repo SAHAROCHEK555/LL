@@ -11,10 +11,9 @@ import keyboards.languages_select_kb as languages_select_kb
 import keyboards.level_language_select as level_language_select_kb
 import keyboards.modules_select_kb as modules_select_kb
 import keyboards.translate_keyboard as translate_kb
-import keyboards.grammar_exercises_kb as grammar_exercises_kb
 import keyboards.flashcard_kb as flashcardKb
-import keyboards.everyday_words_phrases_kb as everyday_words_phrases_kb
 import keyboards.exercises_kb as exercises_kb
+
 
 router = Router()
 user_message = F.data.split()
@@ -22,27 +21,16 @@ path = "database_api/database.json"
 grammar_questions = ''
 translate_questions = ''
 
-#класс с состояниями FSM
-class ModulesStates(StatesGroup):
-    test_level_state = State()
-    translate_state = State()
-    grammar_explain_state = State()
-    grammar_exercise_state = State()
-    translate_exercise_state = State()
-    
-
 async def send_notifications(bot):
     while True:
-        print("__#")
-        english_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов, с примерами их использования на этом языке: Английский. Без вступительного слова - конечно. Отвечай на русском.")
-        franch_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Фрацузский. Без вступительного слова - конечно. Отвечай на русском.")
-        italian_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Итальянский. Без вступительного слова - конечно. Отвечай на русском.")
-        japanese_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Японский. Без вступительного слова - конечно. Отвечай на русском.")
-        spanish_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Испанский. Без вступительного слова - конечно. Отвечай на русском.")
-        german_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Немецкий. Без вступительного слова - конечно. Отвечай на русском.")
-        slovak_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Словацкий. Без вступительного слова - конечно. Отвечай на русском.") 
-        portugues_collection =MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Португальский. Без вступительного слова - конечно. Отвечай на русском.")
-        print("__2")
+        english_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изучении языка и дай мне подборку новых слов, с примерами их использования на этом языке: Английский. Без вступительного слова - конечно. Отвечай на русском.")
+        franch_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изучении языка и дай мне подборку новых слов с примерами их использования на этом языке: Фрацузский. Без вступительного слова - конечно. Отвечай на русском.")
+        italian_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изучении языка и дай мне подборку новых слов с примерами их использования на этом языке: Итальянский. Без вступительного слова - конечно. Отвечай на русском.")
+        japanese_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изучении языка и дай мне подборку новых слов с примерами их использования на этом языке: Японский. Без вступительного слова - конечно. Отвечай на русском.")
+        spanish_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изучении языка и дай мне подборку новых слов с примерами их использования на этом языке: Испанский. Без вступительного слова - конечно. Отвечай на русском.")
+        german_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изучении языка и дай мне подборку новых слов с примерами их использования на этом языке: Немецкий. Без вступительного слова - конечно. Отвечай на русском.")
+        slovak_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изучении языка и дай мне подборку новых слов с примерами их использования на этом языке: Словацкий. Без вступительного слова - конечно. Отвечай на русском.") 
+        portugues_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изучении языка и дай мне подборку новых слов с примерами их использования на этом языке: Португальский. Без вступительного слова - конечно. Отвечай на русском.")
         new_words_collections = {
             "Английский": english_collection,
             "Фрацузский": franch_collection,
@@ -58,7 +46,16 @@ async def send_notifications(bot):
         for i in range(len(users)):
             language = WorkWithDataBase.read_data_from_database(users[i], "language", path)
             await bot.send_message(int(users[i]), new_words_collections[language])
-            await asyncio.sleep(2*2)
+        await asyncio.sleep(60*60*24-60)
+
+
+#класс с состояниями FSM
+class ModulesStates(StatesGroup):
+    test_level_state = State()
+    translate_state = State()
+    grammar_explain_state = State()
+    grammar_exercise_state = State()
+    translate_exercise_state = State()
 
 
 #обработка команд start/restart
@@ -101,6 +98,7 @@ async def write_to_database(callback_query: CallbackQuery):
 async def give_test_for_user(callback_query: CallbackQuery, state: FSMContext):
     language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
     get_test_message = f"Привет! , дай мне тест на определение моего уровня в {language} (Начинающий, Средний, Продвинутый). Скинь только вопросы, я пришлю тебе ответы и ты вернёшь мне следующим сообщением из одного слова мой уровень"
+    await callback_query.message.edit_text('Генерируем запрос...')
     test_for_user = MistralWork.answer_from_mistral(TEST_LEVEL_API_KEY, get_test_message)
     await state.set_state(ModulesStates.test_level_state)
     await callback_query.message.edit_text(test_for_user, reply_markup=level_language_select_kb.back_to_level_select)
@@ -153,7 +151,8 @@ async def grammar_exercises(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(ModulesStates.grammar_exercise_state)
     language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
     level = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "level", path)
-    get_tasks_message = f"Привет! Пожалуйста, дай мне задание на знание грамматики языка {language} для ученика, знающего язык на уровне {level}. Скинь только один вопрос, я пришлю тебе ответ и ты вернёшь мне следующим сообщением верно ли решено задание"
+    get_tasks_message = f"Привет! Пожалуйста, дай мне грамматическое задание на знание грамматики языка {language} для ученика, знающего язык на уровне {level}. Скинь только один вопрос, я пришлю тебе ответ и ты вернёшь мне следующим сообщением верно ли решено задание"
+    await callback_query.message.edit_text('Генерируем запрос...')
     questions_for_user = MistralWork.answer_from_mistral(GRAMMAR_EXERCISES_API_KEY, get_tasks_message)
     grammar_questions = questions_for_user
     await callback_query.message.edit_text(questions_for_user, reply_markup=await exercises_kb.back_to_exercises())
@@ -172,6 +171,7 @@ async def translate_exercises(callback_query: CallbackQuery, state: FSMContext):
     language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
     level = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "level", path)
     get_tasks_message = f"Привет! Пожалуйста, дай мне задание на перевод небольшого текста на языке {language} для ученика, знающего язык на уровне {level}. Скинь только текст, я пришлю тебе перевод и ты вернёшь мне следующим сообщением верно ли решено задание"
+    await callback_query.message.edit_text('Генерируем запрос...')
     questions_for_user = MistralWork.answer_from_mistral(GRAMMAR_EXERCISES_API_KEY, get_tasks_message)
     translate_questions = questions_for_user
     await callback_query.message.edit_text(questions_for_user, reply_markup=await exercises_kb.back_to_exercises())
@@ -196,9 +196,9 @@ async def grammar_handler(message: Message, state: FSMContext):
 
     language = WorkWithDataBase.read_data_from_database(message.from_user.id, "language", path)
     level = WorkWithDataBase.read_data_from_database(message.from_user.id, "level", path)
-
+    
     message_answer = MistralWork.answer_from_mistral(EXPLATION_GRAMMAR_RULES_API_KEY, f"представь что ты учитель иностранного языка и обьяснишяешь мне {data['responce']} в {language} для ученика {level} уровня")
-    await message.answer(text = message_answer)
+    await message.answer(text = message_answer, reply_markup=modules_select_kb.back_to_modules)
     await state.clear()
 
 @router.callback_query(user_message[0] == "flashcards")
