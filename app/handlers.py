@@ -10,14 +10,18 @@ import keyboards.languages_select_kb as languages_select_kb
 import keyboards.level_language_select as level_language_select_kb
 import keyboards.modules_select_kb as modules_select_kb
 import keyboards.translate_keyboard as translate_kb
+import keyboards.grammar_exercises_kb as grammar_exercises_kb
 import keyboards.everyday_words_phrases_kb as everyday_words_phrases_kb
 import keyboards.exercises_kb as exercises_kb
+import asyncio
+
 
 router = Router()
 user_message = F.data.split()
 path = "database_api/database.json"
 grammar_questions = ''
 translate_questions = ''
+
 
 #класс с состояниями FSM
 class ModulesStates(StatesGroup):
@@ -26,6 +30,37 @@ class ModulesStates(StatesGroup):
     grammar_explain_state = State()
     grammar_exercise_state = State()
     translate_exercise_state = State()
+    
+
+async def send_notifications(bot):
+    while True:
+        print("__#")
+        english_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов, с примерами их использования на этом языке: Английский. Без вступительного слова - конечно. Отвечай на русском.")
+        franch_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Фрацузский. Без вступительного слова - конечно. Отвечай на русском.")
+        italian_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Итальянский. Без вступительного слова - конечно. Отвечай на русском.")
+        japanese_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Японский. Без вступительного слова - конечно. Отвечай на русском.")
+        spanish_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Испанский. Без вступительного слова - конечно. Отвечай на русском.")
+        german_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Немецкий. Без вступительного слова - конечно. Отвечай на русском.")
+        slovak_collection = MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Словацкий. Без вступительного слова - конечно. Отвечай на русском.") 
+        portugues_collection =MistralWork.answer_from_mistral(DAILY_WORDS_API_KEY, "Пожелай мне удачи и поддержи меня в изуыении языка и дай мне подборку новых слов с примерами их использования на этом языке: Португальский. Без вступительного слова - конечно. Отвечай на русском.")
+        print("__2")
+        new_words_collections = {
+            "Английский": english_collection,
+            "Фрацузский": franch_collection,
+            "Итальянский": italian_collection,
+            "Японский": japanese_collection,
+            "Испанский": spanish_collection,
+            "Португальский": portugues_collection,
+            "Немецкий": german_collection,
+            "Словацкий": slovak_collection
+        }
+        print("__3")
+        users = WorkWithDataBase.get_all_users_list(path)
+        for i in range(len(users)):
+            language = WorkWithDataBase.read_data_from_database(users[i], "language", path)
+            await bot.send_message(int(users[i]), new_words_collections[language])
+            await asyncio.sleep(2*2)
+  
 
 #обработка команд start/restart
 @router.message(Command("start", "restart"))
@@ -66,7 +101,7 @@ async def write_to_database(callback_query: CallbackQuery):
 @router.callback_query(user_message[0] == "test_level")
 async def give_test_for_user(callback_query: CallbackQuery, state: FSMContext):
     language = WorkWithDataBase.read_data_from_database(callback_query.from_user.id, "language", path)
-    get_test_message = f"Привет! Пожалуйста, дай мне тест на определение моего уровня в {language} (Начинающий, Средний, Продвинутый). Скинь только вопросы, я пришлю тебе ответы и ты вернёшь мне следующим сообщением из одного слова мой уровень"
+    get_test_message = f"Привет! , дай мне тест на определение моего уровня в {language} (Начинающий, Средний, Продвинутый). Скинь только вопросы, я пришлю тебе ответы и ты вернёшь мне следующим сообщением из одного слова мой уровень"
     test_for_user = MistralWork.answer_from_mistral(TEST_LEVEL_API_KEY, get_test_message)
     await state.set_state(ModulesStates.test_level_state)
     await callback_query.message.edit_text(test_for_user, reply_markup=level_language_select_kb.back_to_level_select)
@@ -131,7 +166,6 @@ async def get_grammar_answer(user_message: Message):
     await user_message.answer(grammar_answer, reply_markup=await exercises_kb.back_to_exercises())
 
 
-
 @router.callback_query(user_message[0] == "translate_exercises")
 async def translate_exercises(callback_query: CallbackQuery, state: FSMContext):
     global translate_questions
@@ -150,8 +184,6 @@ async def get_translate_answer(user_message: Message):
     await user_message.answer(translate_answer, reply_markup=await exercises_kb.back_to_exercises())
 
 
-
-
 @router.callback_query(user_message[0] == "explation")
 async def set_grammar_explain_responce(callback_query: CallbackQuery, state: FSMContext): 
     await state.set_state(ModulesStates.grammar_explain_state)
@@ -168,4 +200,3 @@ async def grammar_handler(message: Message, state: FSMContext):
 
     message_answer = MistralWork.answer_from_mistral(EXPLATION_GRAMMAR_RULES_API_KEY, f"представь что ты учитель иностранного языка и обьяснишяешь мне {data['responce']} в {language} для ученика {level} уровня")
     await message.answer(text = message_answer,reply_markup=back_to_modules)
-    await state.clear()

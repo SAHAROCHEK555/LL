@@ -9,7 +9,7 @@ class MistralWork:
         }
         
         data = {
-            "model": "mistral-large-latest",  # Specify the model you want to use
+            "model": "mistral-small-latest",  # Specify the model you want to use
             "messages": [{"role": "user", "content": message}]
         }
         
